@@ -227,7 +227,7 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
 
         public FormValidation doCheckFile(@QueryParameter String file) {
             if (file.length() == 0) {
-                return FormValidation.error(Messages.CRDABuilder_DescriptorImpl_errors_missingFileName());
+                return FormValidation.error("Manifest file location cannot be empty");
             }
             return FormValidation.ok();
         }
@@ -239,7 +239,7 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
 
         @Override
         public String getDisplayName() {
-            return Messages.CRDABuilder_DescriptorImpl_DisplayName();
+            return "Invoke Red Hat Dependency Analysis (RHDA)";
         }
     }
 

@@ -153,7 +153,7 @@
         <dependency>
             <groupId>com.redhat.exhort</groupId>
             <artifactId>exhort-java-api</artifactId>
-            <version>0.0.2</version>
+            <version>0.0.3-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -223,6 +223,11 @@
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>local</id>
+            <name>Local Repository (artefact in project source code)</name>
+            <url>file://${project.basedir}/repository</url>
         </pluginRepository>
 <!--        <pluginRepository>-->
 <!--            <id>github</id>-->
