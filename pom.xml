@@ -9,7 +9,7 @@
 
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>redhat-dependency-analytics</artifactId>
-    <version>0.7.2-SNAPSHOT</version>
+    <version>0.7.1</version>
     <packaging>hpi</packaging>
     <properties>
         <revision>0.1.0</revision>
