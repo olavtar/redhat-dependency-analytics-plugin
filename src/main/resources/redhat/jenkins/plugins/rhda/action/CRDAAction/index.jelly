@@ -85,11 +85,26 @@
 						    <td>${it.report.getSummary().getVulnerabilities().getDirect()}</td>
 						  </tr>
 						</table>
-            <div id="vulnchart"></div>						
-            <div name="input">
-                <input type="button" onclick="window.open(generateURL(),'_blank');" value="RHDA Report (Details)" />
-            </div>
+            <div id="vulnchart"></div>
+			<div name="input">
+				<input type="button" onclick="downloadReport();" value="Download RHDA Report"/>
+			</div>
             <script>
+				function downloadReport() {
+					// Get the download URL
+					var downloadURL = generateURL();
+					// Create a temporary anchor element
+					var downloadLink = document.createElement("a");
+					// Set the download link attributes
+					downloadLink.href = downloadURL;
+					downloadLink.download = "RHDA_Report.html";
+					// Append the anchor element to the body
+					document.body.appendChild(downloadLink);
+					// Trigger a click event on the anchor element
+					downloadLink.click();
+					// Remove the anchor element from the body
+					document.body.removeChild(downloadLink);
+				}
                 function generateURL(){
 					var currentUrl = window.location.pathname;
 					const pathArray = currentUrl.split("/");

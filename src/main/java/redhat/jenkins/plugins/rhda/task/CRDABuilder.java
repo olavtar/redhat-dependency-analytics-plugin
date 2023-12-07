@@ -171,8 +171,6 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
             }
         }
 
-        System.setProperty("hudson.model.DirectoryBrowserSupport.CSP", "");
-
         Path manifestPath = Paths.get(getFile());
         if (manifestPath.getParent() == null) {
             manifestPath = Paths.get(workspace.child(getFile()).toURI());

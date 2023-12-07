@@ -193,7 +193,6 @@ public final class CRDAStep extends Step {
             System.setProperty("RHDA-TOKEN", crdaUuid);
             System.setProperty("RHDA_SOURCE", "jenkins-plugin");
 
-            System.setProperty("hudson.model.DirectoryBrowserSupport.CSP", "");
             // flag for telemetry/uuid to pass to backend for SP
             System.setProperty("CONSENT_TELEMETRY", String.valueOf(step.getConsentTelemetry()));
 
