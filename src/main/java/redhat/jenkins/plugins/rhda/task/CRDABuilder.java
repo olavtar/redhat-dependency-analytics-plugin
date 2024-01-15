@@ -18,9 +18,6 @@ package redhat.jenkins.plugins.rhda.task;
 
 import com.redhat.exhort.Api;
 import com.redhat.exhort.api.AnalysisReport;
-//import com.redhat.exhort.api.DependenciesSummary;
-//import com.redhat.exhort.api.ProviderStatus;
-//import com.redhat.exhort.api.VulnerabilitiesSummary;
 import com.redhat.exhort.api.ProviderReport;
 import com.redhat.exhort.impl.ExhortApi;
 import hudson.EnvVars;
@@ -107,82 +104,71 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
 
         EnvVars envVars = getEnvVars(run, listener);
         System.setProperty("CONSENT_TELEMETRY", String.valueOf(this.getConsentTelemetry()));
-        if(envVars != null){
+        if (envVars != null) {
             // setting system properties to pass to java-api
-            if(envVars.get("EXHORT_MVN_PATH") != null ){
+            if (envVars.get("EXHORT_MVN_PATH") != null) {
                 System.setProperty("EXHORT_MVN_PATH", envVars.get("EXHORT_MVN_PATH"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_MVN_PATH");
             }
 
-            if(envVars.get("EXHORT_NPM_PATH") != null ){
+            if (envVars.get("EXHORT_NPM_PATH") != null) {
                 System.setProperty("EXHORT_NPM_PATH", envVars.get("EXHORT_NPM_PATH"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_NPM_PATH");
             }
 
-            if(envVars.get("EXHORT_GO_PATH") != null ){
+            if (envVars.get("EXHORT_GO_PATH") != null) {
                 System.setProperty("EXHORT_GO_PATH", envVars.get("EXHORT_GO_PATH"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_GO_PATH");
             }
 
-            if(envVars.get("EXHORT_URL") != null ){
+            if (envVars.get("EXHORT_URL") != null) {
                 System.setProperty("EXHORT_URL", envVars.get("EXHORT_URL"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_URL");
             }
 
-            if(envVars.get("EXHORT_SNYK_TOKEN") != null ){
+            if (envVars.get("EXHORT_SNYK_TOKEN") != null) {
                 System.setProperty("EXHORT_SNYK_TOKEN", envVars.get("EXHORT_SNYK_TOKEN"));
-            }
-            else {
+            } else {
                 System.clearProperty("EXHORT_SNYK_TOKEN");
             }
 
-            if(envVars.get("EXHORT_PYTHON3_PATH") != null ){
+            if (envVars.get("EXHORT_PYTHON3_PATH") != null) {
                 System.setProperty("EXHORT_PYTHON3_PATH", envVars.get("EXHORT_PYTHON3_PATH"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_PYTHON3_PATH");
             }
 
-            if(envVars.get("EXHORT_PIP3_PATH") != null ){
+            if (envVars.get("EXHORT_PIP3_PATH") != null) {
                 System.setProperty("EXHORT_PIP3_PATH", envVars.get("EXHORT_PIP3_PATH"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_PIP3_PATH");
             }
 
-            if(envVars.get("EXHORT_PYTHON_PATH") != null ){
+            if (envVars.get("EXHORT_PYTHON_PATH") != null) {
                 System.setProperty("EXHORT_PYTHON_PATH", envVars.get("EXHORT_PYTHON_PATH"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_PYTHON_PATH");
             }
 
-            if(envVars.get("EXHORT_PIP_PATH") != null ){
+            if (envVars.get("EXHORT_PIP_PATH") != null) {
                 System.setProperty("EXHORT_PIP_PATH", envVars.get("EXHORT_PIP_PATH"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_PIP_PATH");
             }
 
-            if(envVars.get("EXHORT_OSS_INDEX_USER") != null ){
+            if (envVars.get("EXHORT_OSS_INDEX_USER") != null) {
                 System.setProperty("EXHORT_OSS_INDEX_USER", envVars.get("EXHORT_OSS_INDEX_USER"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_OSS_INDEX_USER");
             }
 
-            if(envVars.get("EXHORT_OSS_INDEX_TOKEN") != null ){
+            if (envVars.get("EXHORT_OSS_INDEX_TOKEN") != null) {
                 System.setProperty("EXHORT_OSS_INDEX_TOKEN", envVars.get("EXHORT_OSS_INDEX_TOKEN"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_OSS_INDEX_TOKEN");
             }
         }
@@ -220,7 +206,7 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
         }
     }
 
-    private EnvVars getEnvVars(Run<?,?> run, TaskListener listener) {
+    private EnvVars getEnvVars(Run<?, ?> run, TaskListener listener) {
         if (run == null || listener == null) {
             return null;
         }
@@ -259,55 +245,35 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
 
     private void processReport(AnalysisReport report, TaskListener listener) throws ExecutionException, InterruptedException {
         PrintStream logger = listener.getLogger();
-        logger.println("Summary");
-        logger.println("  Dependencies");
-        logger.println("    Total Scanned dependencies: " + report.getScanned().getTotal());
-        logger.println("    Total Direct dependencies: " + report.getScanned().getDirect());
-        logger.println("    Transitive dependencies: " + report.getScanned().getTransitive());
+        logger.println("Dependencies");
+        logger.println("  Total Scanned: " + report.getScanned().getTotal());
+        logger.println("  Total Direct: " + report.getScanned().getDirect());
+        logger.println("  Total Transitive: " + report.getScanned().getTransitive());
         Map<String, ProviderReport> providers = report.getProviders();
         providers.forEach((key, value) -> {
-            if(!key.equalsIgnoreCase("trusted-content")) {
+            if (!key.equalsIgnoreCase("trusted-content")) {
                 logger.println("");
                 logger.println("Provider: " + key);
-                if (value.getStatus().getCode() != 200) {
-                    logger.println("WARNING: " + key + ": " + value.getStatus().getMessage());
-                }
-                if (value.getSources() != null) {
-                    logger.println("  Vulnerabilities");
-                    logger.println("    Total: " + value.getSources().get(key).getSummary().getTotal());
-                    logger.println("    Direct: " + value.getSources().get(key).getSummary().getDirect());
-                    logger.println("    Transitive: " + value.getSources().get(key).getSummary().getTransitive());
-                    logger.println("    Critical: " + value.getSources().get(key).getSummary().getCritical());
-                    logger.println("    High: " + value.getSources().get(key).getSummary().getHigh());
-                    logger.println("    Medium: " + value.getSources().get(key).getSummary().getMedium());
-                    logger.println("    Low: " + value.getSources().get(key).getSummary().getLow());
-                    logger.println("");
+                logger.println("  Provider Status: " + value.getStatus().getMessage());
+                if (value.getStatus().getCode() == 200) {
+                    value.getSources().forEach((s, source) -> {
+                        logger.println("  Source: " + s);
+                        if (value.getSources() != null) {
+                            logger.println("    Vulnerabilities");
+                            logger.println("      Total: " + source.getSummary().getTotal());
+                            logger.println("      Direct: " + source.getSummary().getDirect());
+                            logger.println("      Transitive: " + source.getSummary().getTransitive());
+                            logger.println("      Critical: " + source.getSummary().getCritical());
+                            logger.println("      High: " + source.getSummary().getHigh());
+                            logger.println("      Medium: " + source.getSummary().getMedium());
+                            logger.println("      Low: " + source.getSummary().getLow());
+                            logger.println("");
+                        }
+                    });
                 }
             }
         });
-
         logger.println("");
-
-//        logger.println(report);
-//        DependenciesSummary dependenciesSummary = report.getSummary().getDependencies();
-//        VulnerabilitiesSummary vulnerabilitiesSummary = report.getSummary().getVulnerabilities();
-//        for (ProviderStatus providerStatus : report.getSummary().getProviderStatuses()) {
-//            if(providerStatus.getStatus() != 200){
-//                logger.println("WARNING: " + providerStatus.getProvider() + ": " + providerStatus.getMessage());
-//            }
-//        }
-//        logger.println("Summary");
-//        logger.println("  Dependencies");
-//        logger.println("    Scanned dependencies:    " + dependenciesSummary.getScanned());
-//        logger.println("    Transitive dependencies: " + dependenciesSummary.getTransitive());
-//        logger.println("  Vulnerabilities");
-//        logger.println("    Total: " + vulnerabilitiesSummary.getTotal());
-//        logger.println("    Direct: " + vulnerabilitiesSummary.getDirect());
-//        logger.println("    Critical: " + vulnerabilitiesSummary.getCritical());
-//        logger.println("    High: " + vulnerabilitiesSummary.getHigh());
-//        logger.println("    Medium: " + vulnerabilitiesSummary.getMedium());
-//        logger.println("    Low: " + vulnerabilitiesSummary.getLow());
-//        logger.println("");
     }
 
     private void saveHtmlReport(byte[] html, TaskListener listener, FilePath workspace) throws IOException, InterruptedException {
