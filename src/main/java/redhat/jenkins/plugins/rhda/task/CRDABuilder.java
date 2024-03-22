@@ -130,12 +130,6 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
                 System.clearProperty("EXHORT_URL");
             }
 
-            if (envVars.get("EXHORT_SNYK_TOKEN") != null) {
-                System.setProperty("EXHORT_SNYK_TOKEN", envVars.get("EXHORT_SNYK_TOKEN"));
-            } else {
-                System.clearProperty("EXHORT_SNYK_TOKEN");
-            }
-
             if (envVars.get("EXHORT_PYTHON3_PATH") != null) {
                 System.setProperty("EXHORT_PYTHON3_PATH", envVars.get("EXHORT_PYTHON3_PATH"));
             } else {

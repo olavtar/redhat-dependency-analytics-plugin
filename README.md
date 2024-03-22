@@ -18,12 +18,9 @@
   - [1. Console Output](#1-console-output)
   - [2. RHDA Stack Report](#2-rhda-stack-report)
   - [3. Detailed RHDA Stack Report](#3-detailed-rhda-stack-report)
-- [Snyk Registration](#snyk-registration)
-  - [1. Via SNYK website](#1-via-snyk-website)
-  - [2. Via CLI](#2-via-cli)
-  - 
+
 # Red Hat Dependency Analytics
-Red Hat Dependency Analytics (RHDA) is a Jenkins plug-in developed by **Red Hat Inc**. RHDA is powered by **Snyk Intel Vulnerability DB**, which is the most advanced and accurate open source vulnerability database in the industry. It adds value with the latest, fastest and more number of vulnerabilities derived from numerous sources.
+Red Hat Dependency Analytics (RHDA) is a Jenkins plug-in developed by **Red Hat Inc**. 
 
 'RHDA Report' with Insights about your application dependencies:
 - Flags a security vulnerability(CVE) and suggests a remedial version
@@ -57,11 +54,6 @@ To set a custom path for package managers use environment variables.
   - For Pip3 - Set Name: _EXHORT_PIP3_PATH_ and Value: `/path/to/custom/pip3`.
   - For Python - Set Name: _EXHORT_PYTHON_PATH_ and Value: `/path/to/custom/python`.
   - For Pip - Set Name: _EXHORT_PIP_PATH_ and Value: `/path/to/custom/pip`.
-
-If you have a Snyk token, add that as an environment variable:
-- Click on Manage Jenkins -> System, scroll down to Global properties/Environment Variables.
-- Set the variable name to _EXHORT_SNYK_TOKEN_, and copy-and-paste your Snyk token into the value field.
-
 
 #### General Configuration
  Click <em>Manage Jenkins</em>. Click <em>System</em>, and scroll down to <em>Global properties/Environment Variables</em>. Here you can configure the following settings:
@@ -221,8 +213,3 @@ After every successful analysis, you can find a new icon added in the left panel
 The stack report can be accessed via 2 ways, as mentioned in point number 1 (via url) and 2 (via button click). The report provides comprehensive details about each vulnerability, each dependency in the stack along with the license analysis and the recommended companions.
 ![](./images/detailedStackReport.png)
 
-## Snyk Registration
-
-### Via SNYK website
-
-https://docs.snyk.io/getting-started/quickstart/create-a-snyk-account
