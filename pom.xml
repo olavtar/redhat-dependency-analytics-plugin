@@ -152,7 +152,7 @@
         <dependency>
             <groupId>com.redhat.exhort</groupId>
             <artifactId>exhort-java-api</artifactId>
-            <version>0.0.6</version>
+            <version>0.0.7</version>
         </dependency>
     </dependencies>
 
@@ -208,15 +208,15 @@
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
         </repository>
-        <repository>
-            <id>local</id>
-            <name>Local Repository (artefact in project source code)</name>
-            <url>file://${project.basedir}/repository</url>
-        </repository>
 <!--        <repository>-->
-<!--          <id>github</id>-->
-<!--          <url>https://maven.pkg.github.com/RHEcosystemAppEng/exhort-java-api</url>-->
+<!--            <id>local</id>-->
+<!--            <name>Local Repository (artefact in project source code)</name>-->
+<!--            <url>file://${project.basedir}/repository</url>-->
 <!--        </repository>-->
+        <repository>
+          <id>github</id>
+          <url>https://maven.pkg.github.com/RHEcosystemAppEng/exhort-java-api</url>
+        </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
@@ -228,9 +228,9 @@
             <name>Local Repository (artefact in project source code)</name>
             <url>file://${project.basedir}/repository</url>
         </pluginRepository>
-<!--        <pluginRepository>-->
-<!--            <id>github</id>-->
-<!--            <url>https://maven.pkg.github.com/RHEcosystemAppEng/exhort-java-api</url>-->
-<!--        </pluginRepository>-->
+        <pluginRepository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/RHEcosystemAppEng/exhort-java-api</url>
+        </pluginRepository>
     </pluginRepositories>
 </project>

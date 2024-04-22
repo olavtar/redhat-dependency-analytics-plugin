@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.redhat.exhort</groupId>
   <artifactId>exhort-java-api</artifactId>
-  <version>0.0.6</version>
+  <version>0.0.7</version>
   <name>Exhort Java API</name>
   <description>Exhort Java API</description>
   <url>https://github.com/RHEcosystemAppEng/exhort-java-api#readme</url>
@@ -28,10 +28,16 @@
   <scm>
     <connection>scm:git:git@github.com:RHEcosystemAppEng/exhort-java-api.git</connection>
     <developerConnection>scm:git:git@github.com:RHEcosystemAppEng/exhort-java-api.git</developerConnection>
-    <tag>v0.0.6</tag>
+    <tag>v0.0.7</tag>
     <url>https://github.com/RHEcosystemAppEng/exhort-java-api</url>
   </scm>
   <dependencies>
+    <dependency>
+      <groupId>org.tomlj</groupId>
+      <artifactId>tomlj</artifactId>
+      <version>1.1.1</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>

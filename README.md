@@ -50,6 +50,7 @@ To set a custom path for package managers use environment variables.
   - For Maven - Set Name: _EXHORT_MVN_PATH_ and Value: `/path/to/custom/mvn`.
   - For NPM - Set Name: _EXHORT_NPM_PATH_ and Value: `/path/to/custom/npm`.
   - For GO - Set Name: _EXHORT_GO_PATH_ and Value: `/path/to/custom/go`.
+  - For Gradle - Set Name: _EXHORT_GRADLE_PATH_ and Value: `/path/to/custom/gradle`.
   - For Python3 - Set Name: _EXHORT_PYTHON3_PATH_ and Value: `/path/to/custom/python3`.
   - For Pip3 - Set Name: _EXHORT_PIP3_PATH_ and Value: `/path/to/custom/pip3`.
   - For Python - Set Name: _EXHORT_PYTHON_PATH_ and Value: `/path/to/custom/python`.

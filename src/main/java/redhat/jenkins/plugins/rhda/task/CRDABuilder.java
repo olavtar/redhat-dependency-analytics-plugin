@@ -124,6 +124,13 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
                 System.clearProperty("EXHORT_GO_PATH");
             }
 
+            if(envVars.get("EXHORT_GRADLE_PATH") != null ){
+                System.setProperty("EXHORT_GRADLE_PATH", envVars.get("EXHORT_GRADLE_PATH"));
+            }
+            else{
+                System.clearProperty("EXHORT_GRADLE_PATH");
+            }
+
             if (envVars.get("EXHORT_URL") != null) {
                 System.setProperty("EXHORT_URL", envVars.get("EXHORT_URL"));
             } else {
