@@ -19,23 +19,30 @@ package redhat.jenkins.plugins.rhda.utils;
 import com.redhat.exhort.api.AnalysisReport;
 import com.redhat.exhort.api.Issue;
 import com.redhat.exhort.api.Severity;
+import com.redhat.exhort.image.ImageRef;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
 public class Utils {
+
+	private static final String FROM_REGEX = "^\\s*FROM\\s+(.*)";
+	private static final String PLATFORM_REGEX = "--platform=([^\\s]+)";
+	private static final String AS_REGEX = "(?i)\\s+AS\\s+\\S+";
 
 	public static String doExecute(String cmd, PrintStream logger, Map<String, String> envs) {
 		return new CommandExecutor().execute(cmd, logger, envs);
@@ -122,6 +129,53 @@ public class Utils {
 				.filter(Objects::nonNull)
 				.map(Issue::getSeverity)
 				.collect(Collectors.toSet());
+	}
+
+	public static boolean isDockerfile(Path filePath) throws IOException {
+		try (BufferedReader reader = new BufferedReader(new FileReader(filePath.toFile()))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				// Skip empty lines and comments
+				line = line.trim();
+				if (!line.isEmpty() && !line.startsWith("#")) {
+					return line.startsWith("FROM");
+				}
+			}
+			return false;
+		} catch (IOException e) {
+			throw e;
+		}
+	}
+
+	public static Set<ImageRef> parseDockerfile(String dockerfilePath, PrintStream logger) {
+
+		Set<ImageRef> imageRefs = new HashSet<>();
+		try (BufferedReader reader = new BufferedReader(new FileReader(dockerfilePath))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				line = line.trim();
+
+				Matcher fromMatcher = Pattern.compile(FROM_REGEX).matcher(line);
+				if (fromMatcher.find()) {
+					String image = fromMatcher.group(1);
+					image = image.replaceAll(PLATFORM_REGEX, "");
+					image = image.replaceAll(AS_REGEX, "");
+					image = image.trim();
+
+					Matcher platformMatcher = Pattern.compile(PLATFORM_REGEX).matcher(line);
+					String platform = null;
+					if (platformMatcher.find()) {
+						platform = platformMatcher.group(1);
+					}
+					if (!image.equalsIgnoreCase("scratch")) {
+						imageRefs.add(new ImageRef(image, platform));
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return imageRefs;
 	}
 
 }

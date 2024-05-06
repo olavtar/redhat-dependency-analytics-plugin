@@ -19,6 +19,8 @@ package redhat.jenkins.plugins.rhda.task;
 import com.redhat.exhort.Api;
 import com.redhat.exhort.api.AnalysisReport;
 import com.redhat.exhort.api.ProviderReport;
+import com.redhat.exhort.api.Source;
+import com.redhat.exhort.image.ImageRef;
 import com.redhat.exhort.impl.ExhortApi;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -44,14 +46,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import static redhat.jenkins.plugins.rhda.utils.Utils.isDockerfile;
+import static redhat.jenkins.plugins.rhda.utils.Utils.parseDockerfile;
+
 
 public class CRDABuilder extends Builder implements SimpleBuildStep, Serializable {
     private static final long serialVersionUID = 1L;
-
     private String file;
     private boolean consentTelemetry = false;
 
@@ -124,10 +129,9 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
                 System.clearProperty("EXHORT_GO_PATH");
             }
 
-            if(envVars.get("EXHORT_GRADLE_PATH") != null ){
+            if (envVars.get("EXHORT_GRADLE_PATH") != null) {
                 System.setProperty("EXHORT_GRADLE_PATH", envVars.get("EXHORT_GRADLE_PATH"));
-            }
-            else{
+            } else {
                 System.clearProperty("EXHORT_GRADLE_PATH");
             }
 
@@ -172,7 +176,50 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
             } else {
                 System.clearProperty("EXHORT_OSS_INDEX_TOKEN");
             }
+
+            if (envVars.get("EXHORT_SYFT_PATH") != null) {
+                System.setProperty("EXHORT_SYFT_PATH", envVars.get("EXHORT_SYFT_PATH"));
+            } else {
+                System.clearProperty("EXHORT_SYFT_PATH");
+            }
+
+            if (envVars.get("EXHORT_SYFT_CONFIG_PATH") != null) {
+                System.setProperty("EXHORT_SYFT_CONFIG_PATH", envVars.get("EXHORT_SYFT_CONFIG_PATH"));
+            } else {
+                System.clearProperty("EXHORT_SYFT_CONFIG_PATH");
+            }
+
+            if (envVars.get("EXHORT_SKOPEO_PATH") != null) {
+                System.setProperty("EXHORT_SKOPEO_PATH", envVars.get("EXHORT_SKOPEO_PATH"));
+            } else {
+                System.clearProperty("EXHORT_SKOPEO_PATH");
+            }
+
+            if (envVars.get("EXHORT_SKOPEO_CONFIG_PATH") != null) {
+                System.setProperty("EXHORT_SKOPEO_CONFIG_PATH", envVars.get("EXHORT_SKOPEO_CONFIG_PATH"));
+            } else {
+                System.clearProperty("EXHORT_SKOPEO_CONFIG_PATH");
+            }
+
+            if (envVars.get("EXHORT_DOCKER_PATH") != null) {
+                System.setProperty("EXHORT_DOCKER_PATH", envVars.get("EXHORT_DOCKER_PATH"));
+            } else {
+                System.clearProperty("EXHORT_DOCKER_PATH");
+            }
+
+            if (envVars.get("EXHORT_PODMAN_PATH") != null) {
+                System.setProperty("EXHORT_PODMAN_PATH", envVars.get("EXHORT_PODMAN_PATH"));
+            } else {
+                System.clearProperty("EXHORT_PODMAN_PATH");
+            }
+
+            if (envVars.get("EXHORT_IMAGE_PLATFORM") != null) {
+                System.setProperty("EXHORT_IMAGE_PLATFORM", envVars.get("EXHORT_IMAGE_PLATFORM"));
+            } else {
+                System.clearProperty("EXHORT_IMAGE_PLATFORM");
+            }
         }
+
 
         Path manifestPath = Paths.get(getFile());
         if (manifestPath.getParent() == null) {
@@ -186,24 +233,56 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
         // instantiate the Exhort(crda) API implementation
         var exhortApi = new ExhortApi();
 
-        // get a AnalysisReport future holding a mixed report object aggregating:
-        // - (json) deserialized Stack Analysis report
-        // - (html) html Stack Analysis report
-        CompletableFuture<Api.MixedReport> mixedStackReport = exhortApi.stackAnalysisMixed(manifestPath.toString());
+        boolean isDockerfile = isDockerfile(manifestPath);
+        if (isDockerfile) {
+            Set<ImageRef> imageRefs = parseDockerfile(manifestPath.toString(), logger);
+            if (imageRefs.isEmpty()) {
+                logger.println("No base images found in the Dockerfile.");
+            } else {
+                CompletableFuture<Map<ImageRef, AnalysisReport>> jsonAnalysisResults = exhortApi.imageAnalysis(imageRefs);
+                CompletableFuture<byte[]> htmlAnalysisResults = exhortApi.imageAnalysisHtml(imageRefs);
+                try {
+                    Map<ImageRef, AnalysisReport> analysisMap = jsonAnalysisResults.get();
+                    for (Map.Entry<ImageRef, AnalysisReport> entry : analysisMap.entrySet()) {
+                        ImageRef imageRef = entry.getKey();
+                        AnalysisReport report = entry.getValue();
+                        logger.println("Analysis for image: " + imageRef.getImage().getSimpleName() + ":" + imageRef.getImage().getTag());
+                        processReport(report, listener);
+                    }
+                    saveHtmlReport(htmlAnalysisResults.get(), listener, workspace);
+                    // Archiving the report
+                    ArtifactArchiver archiver = new ArtifactArchiver("dependency-analytics-report.html");
+                    archiver.perform(run, workspace, envVars, launcher, listener);
+                    logger.println("Click on the RHDA Stack Report icon to view the detailed report.");
+                    logger.println("----- RHDA Analysis Ends -----");
+                    run.addAction(new CRDAAction(crdaUuid, analysisMap, workspace + "/dependency-analysis-report.html", "freestyle"));
 
-        try {
-            processReport(mixedStackReport.get().json, listener);
-            saveHtmlReport(mixedStackReport.get().html, listener, workspace);
-            // Archiving the report
-            ArtifactArchiver archiver = new ArtifactArchiver("dependency-analytics-report.html");
-            archiver.perform(run, workspace, envVars, launcher, listener);
-            logger.println("Click on the RHDA Stack Report icon to view the detailed report.");
-            logger.println("----- RHDA Analysis Ends -----");
-            run.addAction(new CRDAAction(crdaUuid, mixedStackReport.get().json, workspace + "/dependency-analysis-report.html", "freestyle"));
-        } catch (ExecutionException e) {
-            logger.println("error");
-            e.printStackTrace(logger);
-            e.printStackTrace();
+                } catch (Exception e) {
+                    logger.println("error");
+                    e.printStackTrace(logger);
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            // get a AnalysisReport future holding a mixed report object aggregating:
+            // - (json) deserialized Stack Analysis report
+            // - (html) html Stack Analysis report
+            CompletableFuture<Api.MixedReport> mixedStackReport = exhortApi.stackAnalysisMixed(manifestPath.toString());
+
+            try {
+                processReport(mixedStackReport.get().json, listener);
+                saveHtmlReport(mixedStackReport.get().html, listener, workspace);
+                // Archiving the report
+                ArtifactArchiver archiver = new ArtifactArchiver("dependency-analytics-report.html");
+                archiver.perform(run, workspace, envVars, launcher, listener);
+                logger.println("Click on the RHDA Stack Report icon to view the detailed report.");
+                logger.println("----- RHDA Analysis Ends -----");
+                run.addAction(new CRDAAction(crdaUuid, mixedStackReport.get().json, workspace + "/dependency-analysis-report.html", "freestyle"));
+            } catch (ExecutionException e) {
+                logger.println("error");
+                e.printStackTrace(logger);
+                e.printStackTrace();
+            }
         }
     }
 
@@ -257,7 +336,9 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
                 logger.println("Provider: " + key.substring(0, 1).toUpperCase() + key.substring(1));
                 logger.println("  Provider Status   : " + value.getStatus().getMessage());
                 if (value.getStatus().getCode() == 200) {
-                    value.getSources().forEach((s, source) -> {
+                   Map<String, Source> sources =  value.getSources();
+                    if (sources != null && !sources.isEmpty()) {
+                        value.getSources().forEach((s, source) -> {
                         logger.println("  Source: " + s.substring(0, 1).toUpperCase() + s.substring(1));
                         if (value.getSources() != null) {
                             logger.println("    Vulnerabilities");
@@ -270,7 +351,10 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
                             logger.println("      Low           : " + source.getSummary().getLow());
                             logger.println("");
                         }
-                    });
+                      });
+                    } else {
+                        logger.println("No Vulnerabities found");
+                     }
                 }
             }
         });

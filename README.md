@@ -39,7 +39,20 @@ The plugin can be used in Jenkins as a pipeline task or as a build step.
 - Restart Jenkins.
 
 ### 2. Configuration
-Make sure that the Path is updated to point to the corresponding executables, like `mvn`, `pip` etc.
+Make sure that the Path is updated to point to the corresponding executables, like `mvn`, `pip` etc. 
+
+**Prerequisites**
+
+- For Maven projects, analyzing a `pom.xml` file, you must have the `mvn` binary in your IDE's `PATH` environment.
+- For Node projects, analyzing a `package.json` file, you must have the `npm` and `node` binaries in your IDE's `PATH`
+  environment.
+- For Golang projects, analyzing a `go.mod` file, you must have the `go` binary in your IDE's `PATH` environment.
+- For Python projects, analyzing a `requirements.txt` file, you must have the `python3` and `pip3` binaries in your
+  IDE's `PATH` environment.
+- For base images, analyzing a `Dockerfile`, you must have
+  the [syft](https://github.com/anchore/syft?tab=readme-ov-file#installation)
+  and [skopeo](https://github.com/containers/skopeo/blob/main/install.md) binaries in your IDE's `PATH`
+  environment.
 
 #### Customization
 
@@ -55,7 +68,23 @@ To set a custom path for package managers use environment variables.
   - For Pip3 - Set Name: _EXHORT_PIP3_PATH_ and Value: `/path/to/custom/pip3`.
   - For Python - Set Name: _EXHORT_PYTHON_PATH_ and Value: `/path/to/custom/python`.
   - For Pip - Set Name: _EXHORT_PIP_PATH_ and Value: `/path/to/custom/pip`.
+- For Image support:
 
+| Env / Property                | Description                                                                                                                                                     | Default Value                                                                                                                                 |
+|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| EXHORT_SYFT_PATH              | Custom path to the `syft` executable                                                                                                                            | syft                                                                                                                                          |
+| EXHORT_SYFT_CONFIG_PATH       | Custom path to the `syft` [configuration file](https://github.com/anchore/syft?tab=readme-ov-file#configuration)                                                | .syft.yaml, .syft/config.yaml, $HOME/.syft.yaml                                                                                               |
+| EXHORT_SYFT_IMAGE_SOURCE      | [Source](https://github.com/anchore/syft?tab=readme-ov-file#supported-sources) from which `syft` looks for the images (e.g. docker, podman, registry)           | (By default, Syft attempts to resolve it using: the Docker, Podman, and Containerd daemons followed by direct registry access, in that order) |
+| EXHORT_SKOPEO_PATH            | Custom path to the `skopeo` executable                                                                                                                          | skopeo                                                                                                                                        |
+| EXHORT_SKOPEO_CONFIG_PATH     | Custom path to the [authentication file](https://github.com/containers/skopeo/blob/main/docs/skopeo-inspect.1.md#options) used by `skopeo inspect`              | $HOME/.docker/config.json                                                                                                                     |
+| EXHORT_IMAGE_SERVICE_ENDPOINT | [Host endpoint](https://github.com/containers/skopeo/blob/main/docs/skopeo-inspect.1.md#options) of the container runtime daemon / service                      |                                                                                                                                               |
+| EXHORT_DOCKER_PATH            | Custom path to the `docker` executable                                                                                                                          | docker                                                                                                                                        |
+| EXHORT_PODMAN_PATH            | Custom path to the `podman` executable                                                                                                                          | podman                                                                                                                                        |
+| EXHORT_IMAGE_PLATFORM         | Default platform used for multi-arch images                                                                                                                     |                                                                                                                                               |
+| EXHORT_IMAGE_OS               | Default OS used for multi-arch images when `EXHORT_IMAGE_PLATFORM` is not set                                                                                   |                                                                                                                                               |
+| EXHORT_IMAGE_ARCH             | Default Architecture used for multi-arch images when `EXHORT_IMAGE_PLATFORM` is not set                                                                         |                                                                                                                                               |
+| EXHORT_IMAGE_VARIANT          | Default Variant used for multi-arch images when `EXHORT_IMAGE_PLATFORM` is not set      
+ 
 #### General Configuration
  Click <em>Manage Jenkins</em>. Click <em>System</em>, and scroll down to <em>Global properties/Environment Variables</em>. Here you can configure the following settings:
  - name: `EXHORT_DEBUG`, Value: `true` , Description: Will invoke the analysis in verbose mode and will print a lot of useful logs to job output console - good for debugging, Default value is false.

@@ -17,7 +17,10 @@
 package redhat.jenkins.plugins.rhda.step;
 
 import com.redhat.exhort.Api;
-import com.redhat.exhort.api.*;
+import com.redhat.exhort.api.AnalysisReport;
+import com.redhat.exhort.api.ProviderReport;
+import com.redhat.exhort.api.Severity;
+import com.redhat.exhort.image.ImageRef;
 import com.redhat.exhort.impl.ExhortApi;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -49,7 +52,9 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
+
+import static redhat.jenkins.plugins.rhda.utils.Utils.isDockerfile;
+import static redhat.jenkins.plugins.rhda.utils.Utils.parseDockerfile;
 
 public final class CRDAStep extends Step {
     private String file;
@@ -202,6 +207,47 @@ public final class CRDAStep extends Step {
                 else{
                     System.clearProperty("EXHORT_DEBUG");
                 }
+                if (envVars.get("EXHORT_SYFT_PATH") != null) {
+                    System.setProperty("EXHORT_SYFT_PATH", envVars.get("EXHORT_SYFT_PATH"));
+                } else {
+                    System.clearProperty("EXHORT_SYFT_PATH");
+                }
+
+                if (envVars.get("EXHORT_SYFT_CONFIG_PATH") != null) {
+                    System.setProperty("EXHORT_SYFT_CONFIG_PATH", envVars.get("EXHORT_SYFT_CONFIG_PATH"));
+                } else {
+                    System.clearProperty("EXHORT_SYFT_CONFIG_PATH");
+                }
+
+                if (envVars.get("EXHORT_SKOPEO_PATH") != null) {
+                    System.setProperty("EXHORT_SKOPEO_PATH", envVars.get("EXHORT_SKOPEO_PATH"));
+                } else {
+                    System.clearProperty("EXHORT_SKOPEO_PATH");
+                }
+
+                if (envVars.get("EXHORT_SKOPEO_CONFIG_PATH") != null) {
+                    System.setProperty("EXHORT_SKOPEO_CONFIG_PATH", envVars.get("EXHORT_SKOPEO_CONFIG_PATH"));
+                } else {
+                    System.clearProperty("EXHORT_SKOPEO_CONFIG_PATH");
+                }
+
+                if (envVars.get("EXHORT_DOCKER_PATH") != null) {
+                    System.setProperty("EXHORT_DOCKER_PATH", envVars.get("EXHORT_DOCKER_PATH"));
+                } else {
+                    System.clearProperty("EXHORT_DOCKER_PATH");
+                }
+
+                if (envVars.get("EXHORT_PODMAN_PATH") != null) {
+                    System.setProperty("EXHORT_PODMAN_PATH", envVars.get("EXHORT_PODMAN_PATH"));
+                } else {
+                    System.clearProperty("EXHORT_PODMAN_PATH");
+                }
+
+                if (envVars.get("EXHORT_IMAGE_PLATFORM") != null) {
+                    System.setProperty("EXHORT_IMAGE_PLATFORM", envVars.get("EXHORT_IMAGE_PLATFORM"));
+                } else {
+                    System.clearProperty("EXHORT_IMAGE_PLATFORM");
+                }
 
                 String crdaUuid;
                 RHDAGlobalConfig globalConfig = RHDAGlobalConfig.get();
@@ -248,32 +294,64 @@ public final class CRDAStep extends Step {
 
             // instantiate the Crda API implementation
             var exhortApi = new ExhortApi();
-            CompletableFuture<Api.MixedReport> mixedStackReport = exhortApi.stackAnalysisMixed(manifestPath.toString());
 
-            try {
-                processReport(mixedStackReport.get().json, listener);
-                saveHtmlReport(mixedStackReport.get().html, listener, workspace);
-                // Archiving the report
-                ArtifactArchiver archiver = new ArtifactArchiver("dependency-analytics-report.html");
-                archiver.perform(run, workspace, getContext().get(EnvVars.class), getContext().get(Launcher.class), listener);
+            boolean isDockerfile = isDockerfile(manifestPath);
+            if (isDockerfile) {
+                Set<ImageRef> imageRefs = parseDockerfile(manifestPath.toString(), logger);
+                if (imageRefs.isEmpty()) {
+                    logger.println("No base images found in the Dockerfile.");
+                } else {
+                    CompletableFuture<Map<ImageRef, AnalysisReport>> jsonAnalysisResults = exhortApi.imageAnalysis(imageRefs);
+                    CompletableFuture<byte[]> htmlAnalysisResults = exhortApi.imageAnalysisHtml(imageRefs);
+                    try {
+                        Map<ImageRef, AnalysisReport> analysisMap = jsonAnalysisResults.get();
+                        for (Map.Entry<ImageRef, AnalysisReport> entry : analysisMap.entrySet()) {
+                            ImageRef imageRef = entry.getKey();
+                            AnalysisReport report = entry.getValue();
+                            logger.println("Analysis for image: " + imageRef.getImage().getSimpleName() + ":" + imageRef.getImage().getTag());
+                            processReport(report, listener);
+                        }
+                        saveHtmlReport(htmlAnalysisResults.get(), listener, workspace);
+                        // Archiving the report
+                        ArtifactArchiver archiver = new ArtifactArchiver("dependency-analytics-report.html");
+                        archiver.perform(run, workspace, getContext().get(EnvVars.class), getContext().get(Launcher.class), listener);
+                        logger.println("Click on the RHDA Stack Report icon to view the detailed report.");
+                        logger.println("----- RHDA Analysis Ends -----");
+                        run.addAction(new CRDAAction(System.getProperty("RHDA-TOKEN"), analysisMap, workspace + "/dependency-analysis-report.html", "pipeline"));
 
-                logger.println("Click on the RHDA Stack Report icon to view the detailed report.");
-                logger.println("----- RHDA Analysis Ends -----");
-                run.addAction(new CRDAAction(System.getProperty("RHDA-TOKEN"), mixedStackReport.get().json, workspace + "/dependency-analysis-report.html", "pipeline"));
+                    } catch (Exception e) {
+                        logger.println("error");
+                        e.printStackTrace(logger);
+                        e.printStackTrace();
+                    }
+                }
+            } else {
+                CompletableFuture<Api.MixedReport> mixedStackReport = exhortApi.stackAnalysisMixed(manifestPath.toString());
+
+                try {
+                    processReport(mixedStackReport.get().json, listener);
+                    saveHtmlReport(mixedStackReport.get().html, listener, workspace);
+                    // Archiving the report
+                    ArtifactArchiver archiver = new ArtifactArchiver("dependency-analytics-report.html");
+                    archiver.perform(run, workspace, getContext().get(EnvVars.class), getContext().get(Launcher.class), listener);
+
+                    logger.println("Click on the RHDA Stack Report icon to view the detailed report.");
+                    logger.println("----- RHDA Analysis Ends -----");
+                    run.addAction(new CRDAAction(System.getProperty("RHDA-TOKEN"), mixedStackReport.get().json, workspace + "/dependency-analysis-report.html", "pipeline"));
 //                isHighestVulnerabilityAllowedExceeded
-                Set<Severity> allHighestSeverities = Utils.getAllHighestSeveritiesFromResponse(mixedStackReport.get().json);
-                var highestAllowedSeverity = getHighestAllowedSeverity( getContext().get(EnvVars.class).get("HIGHEST_ALLOWED_VULN_SEVERITY"));
-                if(Utils.isHighestVulnerabilityAllowedExceeded(allHighestSeverities, highestAllowedSeverity )) {
-                    return Config.EXIT_VULNERABLE;
-                }
-                else {
-                    return Config.EXIT_SUCCESS;
-                }
+                    Set<Severity> allHighestSeverities = Utils.getAllHighestSeveritiesFromResponse(mixedStackReport.get().json);
+                    var highestAllowedSeverity = getHighestAllowedSeverity(getContext().get(EnvVars.class).get("HIGHEST_ALLOWED_VULN_SEVERITY"));
+                    if (Utils.isHighestVulnerabilityAllowedExceeded(allHighestSeverities, highestAllowedSeverity)) {
+                        return Config.EXIT_VULNERABLE;
+                    } else {
+                        return Config.EXIT_SUCCESS;
+                    }
 
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
             }
             return Config.EXIT_FAILED;
         }

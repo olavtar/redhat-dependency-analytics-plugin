@@ -17,14 +17,18 @@
 package redhat.jenkins.plugins.rhda.action;
 
 import com.redhat.exhort.api.AnalysisReport;
+import com.redhat.exhort.image.ImageRef;
 import hudson.model.Run;
 import jenkins.model.RunAction2;
+
+import java.util.Map;
 
 public class CRDAAction implements RunAction2 {
 
     private transient Run run;
     private String uuid;
     private AnalysisReport report;
+    private Map<ImageRef, AnalysisReport> reportMap;
     private String url;
 
     public String getJobtype() {
@@ -59,6 +63,14 @@ public class CRDAAction implements RunAction2 {
 
     }
 
+    public CRDAAction(String uuid, Map<ImageRef, AnalysisReport> reportMap, String url, String jobtype) {
+        this.uuid = uuid;
+        this.reportMap = reportMap;
+        this.url = url;
+        this.jobtype = jobtype;
+
+    }
+
     public String getUuid() {
             return uuid;
     }
@@ -80,5 +92,9 @@ public class CRDAAction implements RunAction2 {
     @Override
     public String getUrlName() {
         return "stack_report";
+    }
+
+    public Map<ImageRef, AnalysisReport> getReportMap() {
+        return reportMap;
     }
 }

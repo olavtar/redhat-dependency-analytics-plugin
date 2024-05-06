@@ -23,6 +23,7 @@
         // Load google charts
         google.charts.load('current', {'packages': ['corechart']});
         google.charts.setOnLoadCallback(getData);
+        google.charts.setOnLoadCallback(getMapData);
 
         function getData() {
         <j:forEach var="entry" items="${it.report.getProviders().entrySet()}">
@@ -39,33 +40,56 @@
         </j:forEach>
         }
 
+        function getMapData() {
+        <j:forEach var="entry" items="${it.reportMap.entrySet()}">
+            <j:set var="keyEntry" value="${entry.key}"/>
+            <j:set var="valueEntry" value="${entry.value}"/>
+            <j:forEach var="reportData" items="${valueEntry.getProviders().entrySet()}">
+                <j:set var="key" value="${reportData.key}"/>
+                <j:set var="value" value="${reportData.value}"/>
+                <j:choose>
+                    <j:when test="${key != 'trusted-content'}">
+                        <j:choose>
+                           <j:when test="${value.getSources() != null and !value.getSources().isEmpty()}">
+                            drawChart('${keyEntry.getImage().getSimpleName()}', ${value.getSources().get(key).getSummary().getLow()},
+                            ${value.getSources().get(key).getSummary().getMedium()},
+                            ${value.getSources().get(key).getSummary().getHigh()},
+                            ${value.getSources().get(key).getSummary().getCritical()});
+                           </j:when>
+                        </j:choose>
+                    </j:when>
+                </j:choose>
+            </j:forEach>
+        </j:forEach>
+        }
+
         // Draw the chart and set the chart values
         function drawChart(providerKey, low, medium, high, critical) {
-        var data = google.visualization.arrayToDataTable([
-        ['Severity', 'Vulnerabilities'],
-        ['Low', low],
-        ['Medium', medium],
-        ['High', high],
-        ['Critical', critical]
-        ]);
+            var data = google.visualization.arrayToDataTable([
+            ['Severity', 'Vulnerabilities'],
+            ['Low', low],
+            ['Medium', medium],
+            ['High', high],
+            ['Critical', critical]
+            ]);
 
-        var options = {
-        'title': 'Severity of Vulnerabilities',
-        'width': 450,
-        'height': 300,
-        pieSliceText: 'value',
-        is3D: true,
-        titleTextStyle: {fontSize: 18},
-        legend: {textStyle: {color: 'blue', fontSize: 15}},
-        fontSize: 15,
-        slices: {0: {color: '#cccc00'}, 1: {color: '#ffa500'}, 2: {color: '#ff0000'}, 3: {color: '#800000'}}
-        };
+            var options = {
+            'title': 'Severity of Vulnerabilities',
+            'width': 450,
+            'height': 300,
+            pieSliceText: 'value',
+            is3D: true,
+            titleTextStyle: {fontSize: 18},
+            legend: {textStyle: {color: 'blue', fontSize: 15}},
+            fontSize: 15,
+            slices: {0: {color: '#cccc00'}, 1: {color: '#ffa500'}, 2: {color: '#ff0000'}, 3: {color: '#800000'}}
+            };
 
-        var chartDivId = 'vulnchart_' + providerKey;
-        var pie = document.getElementById(chartDivId);
-        pie.style.display = "block";
-        var chart = new google.visualization.PieChart(pie);
-        chart.draw(data, options);
+            var chartDivId = 'vulnchart_' + providerKey;
+            var pie = document.getElementById(chartDivId);
+            pie.style.display = "block";
+            var chart = new google.visualization.PieChart(pie);
+            chart.draw(data, options);
         }
     </script>
     <l:layout title="RHDA Stack Report">
@@ -76,57 +100,130 @@
             <h2>
                 Analysis Symmary
             </h2>
-            <!-- Iterate over the map entries -->
-            <j:forEach var="entry" items="${it.report.getProviders().entrySet()}">
-                <j:set var="key" value="${entry.key}"/>
-                <j:set var="value" value="${entry.value}"/>
-                <j:choose>
-                    <j:when test="${key != 'trusted-content'}">
-                        <h3>Provider: ${key}</h3>
-                        <h5>Dependency Details</h5>
-                        <table>
-                            <tr>
-                                <th>Keyword</th>
-                                <th>Value</th>
-                            </tr>
-                            <tr>
-                                <td>Total Scanned dependencies</td>
-                                <td>${it.report.getScanned().getTotal()}</td>
-                            </tr>
-                            <tr>
-                                <td>Total Direct dependencies</td>
-                                <td>${it.report.getScanned().getDirect()}</td>
-                            </tr>
-                            <tr>
-                                <td>Total Transitive dependencies</td>
-                                <td>${it.report.getScanned().getTransitive()}</td>
-                            </tr>
-                        </table>
-                        <div style="margin-top: 20px;">
-                            <h5>Vulnerability Details</h5>
-                        </div>
-                        <table>
-                            <tr>
-                                <th>Keyword</th>
-                                <th>Value</th>
-                            </tr>
-                            <tr>
-                                <td>Total Vulnerabilities</td>
-                                <td>${value.getSources().get(key).getSummary().getTotal()}</td>
-                            </tr>
-                            <tr>
-                                <td>Direct Vulnerabilities</td>
-                                <td>${value.getSources().get(key).getSummary().getDirect()}</td>
-                            </tr>
-                            <tr>
-                                <td>Transitive Vulnerabilities</td>
-                                <td>${value.getSources().get(key).getSummary().getTransitive()}</td>
-                            </tr>
-                        </table>
-                        <div id="vulnchart_${key}"></div>
-                    </j:when>
-                </j:choose>
-            </j:forEach>
+            <!-- Check if report is a map -->
+            <j:if test="${it.reportMap != null}">
+                <j:forEach var="entry" items="${it.reportMap.entrySet()}">
+                    <j:set var="image" value="${entry.key}"/>
+                    <j:set var="imageReport" value="${entry.value}"/>
+                    <div style="margin-top: 20px;">
+                     <h3>Image Name: ${image.getImage().getSimpleName() + ":" + image.getImage().getTag()}</h3>
+                    </div>
+                    <!-- Process each map entry -->
+                    <j:forEach var="reportData" items="${imageReport.getProviders().entrySet()}">
+                        <j:set var="key" value="${reportData.key}"/>
+                        <j:set var="value" value="${reportData.value}"/>
+                        <j:choose>
+                            <j:when test="${key != 'trusted-content'}">
+                                <h4>Provider: ${key}</h4>
+                                <h5>Dependency Details</h5>
+                                <table>
+                                    <tr>
+                                        <th>Keyword</th>
+                                        <th>Value</th>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Scanned dependencies</td>
+                                        <td>${imageReport.getScanned().getTotal()}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Direct dependencies</td>
+                                        <td>${imageReport.getScanned().getDirect()}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Transitive dependencies</td>
+                                        <td>${imageReport.getScanned().getTransitive()}</td>
+                                    </tr>
+                                </table>
+                                <j:choose>
+                                    <j:when test="${value.getSources() != null and !value.getSources().isEmpty()}">
+                                        <div style="margin-top: 20px;">
+                                            <h5>Vulnerability Details</h5>
+                                        </div>
+                                        <table>
+                                            <tr>
+                                                <th>Keyword</th>
+                                                <th>Value</th>
+                                            </tr>
+                                            <tr>
+                                                <td>Total Vulnerabilities</td>
+                                                <td>${value.getSources().get(key).getSummary().getTotal()}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Direct Vulnerabilities</td>
+                                                <td>${value.getSources().get(key).getSummary().getDirect()}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Transitive Vulnerabilities</td>
+                                                <td>${value.getSources().get(key).getSummary().getTransitive()}</td>
+                                            </tr>
+                                        </table>
+                                        <div id="vulnchart_${image.getImage().getSimpleName()}"></div>
+                                    </j:when>
+                                    <j:otherwise>
+                                        <div style="margin-top: 20px;">
+                                          <h5>Vulnerability Details - No Vulnerabilities Found</h5>
+                                        </div>
+                                    </j:otherwise>
+                                </j:choose>
+                            </j:when>
+                        </j:choose>
+                    </j:forEach>
+                </j:forEach>
+            </j:if>
+
+            <j:if test="${it.report != null}">
+                <!-- Iterate over the map entries -->
+                <j:forEach var="entry" items="${it.report.getProviders().entrySet()}">
+                    <j:set var="key" value="${entry.key}"/>
+                    <j:set var="value" value="${entry.value}"/>
+                    <j:choose>
+                        <j:when test="${key != 'trusted-content'}">
+                            <h3>Provider: ${key}</h3>
+                            <h5>Dependency Details</h5>
+                            <table>
+                                <tr>
+                                    <th>Keyword</th>
+                                    <th>Value</th>
+                                </tr>
+                                <tr>
+                                    <td>Total Scanned dependencies</td>
+                                    <td>${it.report.getScanned().getTotal()}</td>
+                                </tr>
+                                <tr>
+                                    <td>Total Direct dependencies</td>
+                                    <td>${it.report.getScanned().getDirect()}</td>
+                                </tr>
+                                <tr>
+                                    <td>Total Transitive dependencies</td>
+                                    <td>${it.report.getScanned().getTransitive()}</td>
+                                </tr>
+                            </table>
+                            <div style="margin-top: 20px;">
+                                <h5>Vulnerability Details</h5>
+                            </div>
+                            <table>
+                                <tr>
+                                    <th>Keyword</th>
+                                    <th>Value</th>
+                                </tr>
+                                <tr>
+                                    <td>Total Vulnerabilities</td>
+                                    <td>${value.getSources().get(key).getSummary().getTotal()}</td>
+                                </tr>
+                                <tr>
+                                    <td>Direct Vulnerabilities</td>
+                                    <td>${value.getSources().get(key).getSummary().getDirect()}</td>
+                                </tr>
+                                <tr>
+                                    <td>Transitive Vulnerabilities</td>
+                                    <td>${value.getSources().get(key).getSummary().getTransitive()}</td>
+                                </tr>
+                            </table>
+                            <div id="vulnchart_${key}"></div>
+                        </j:when>
+                    </j:choose>
+                </j:forEach>
+            </j:if>
             <div name="input">
                 <input type="button" onclick="downloadReport();" value="Download RHDA Report (Details)"/>
             </div>

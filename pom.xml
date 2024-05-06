@@ -223,11 +223,11 @@
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
-        <pluginRepository>
-            <id>local</id>
-            <name>Local Repository (artefact in project source code)</name>
-            <url>file://${project.basedir}/repository</url>
-        </pluginRepository>
+<!--        <pluginRepository>-->
+<!--            <id>local</id>-->
+<!--            <name>Local Repository (artefact in project source code)</name>-->
+<!--            <url>file://${project.basedir}/repository</url>-->
+<!--        </pluginRepository>-->
         <pluginRepository>
             <id>github</id>
             <url>https://maven.pkg.github.com/RHEcosystemAppEng/exhort-java-api</url>
