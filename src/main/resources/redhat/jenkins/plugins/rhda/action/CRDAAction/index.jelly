@@ -65,6 +65,15 @@
 
         // Draw the chart and set the chart values
         function drawChart(providerKey, low, medium, high, critical) {
+
+            var totalVulnerabilities = low + medium + high + critical;
+
+            if (totalVulnerabilities === 0) {
+                var chartDivId = 'vulnchart_' + providerKey;
+                var chartDiv = document.getElementById(chartDivId);
+                return;
+            }
+
             var data = google.visualization.arrayToDataTable([
             ['Severity', 'Vulnerabilities'],
             ['Low', low],
@@ -134,37 +143,28 @@
                                         <td>${imageReport.getScanned().getTransitive()}</td>
                                     </tr>
                                 </table>
-                                <j:choose>
-                                    <j:when test="${value.getSources() != null and !value.getSources().isEmpty()}">
-                                        <div style="margin-top: 20px;">
-                                            <h5>Vulnerability Details</h5>
-                                        </div>
-                                        <table>
-                                            <tr>
-                                                <th>Keyword</th>
-                                                <th>Value</th>
-                                            </tr>
-                                            <tr>
-                                                <td>Total Vulnerabilities</td>
-                                                <td>${value.getSources().get(key).getSummary().getTotal()}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Direct Vulnerabilities</td>
-                                                <td>${value.getSources().get(key).getSummary().getDirect()}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Transitive Vulnerabilities</td>
-                                                <td>${value.getSources().get(key).getSummary().getTransitive()}</td>
-                                            </tr>
-                                        </table>
-                                        <div id="vulnchart_${image.getImage().getSimpleName()}"></div>
-                                    </j:when>
-                                    <j:otherwise>
-                                        <div style="margin-top: 20px;">
-                                          <h5>Vulnerability Details - No Vulnerabilities Found</h5>
-                                        </div>
-                                    </j:otherwise>
-                                </j:choose>
+                                    <div style="margin-top: 20px;">
+                                        <h5>Vulnerability Details</h5>
+                                    </div>
+                                    <table>
+                                        <tr>
+                                            <th>Keyword</th>
+                                            <th>Value</th>
+                                        </tr>
+                                        <tr>
+                                            <td>Total Vulnerabilities</td>
+                                            <td>${value.getSources().get(key).getSummary().getTotal()}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Direct Vulnerabilities</td>
+                                            <td>${value.getSources().get(key).getSummary().getDirect()}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Transitive Vulnerabilities</td>
+                                            <td>${value.getSources().get(key).getSummary().getTransitive()}</td>
+                                        </tr>
+                                    </table>
+                                    <div id="vulnchart_${image.getImage().getSimpleName()}"></div>
                             </j:when>
                         </j:choose>
                     </j:forEach>
@@ -235,7 +235,7 @@
                     var downloadLink = document.createElement("a");
                     // Set the download link attributes
                     downloadLink.href = downloadURL;
-                    downloadLink.download = "Dependency-Analytics-Report.html.html";
+                    downloadLink.download = "Dependency-Analytics-Report.html";
                     // Append the anchor element to the body
                     document.body.appendChild(downloadLink);
                     // Trigger a click event on the anchor element

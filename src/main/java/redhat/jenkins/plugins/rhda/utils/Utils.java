@@ -138,12 +138,12 @@ public class Utils {
 				// Skip empty lines and comments
 				line = line.trim();
 				if (!line.isEmpty() && !line.startsWith("#")) {
-					return line.startsWith("FROM");
+					if (line.startsWith("FROM")) {
+						return true; // Found at least one "FROM", so it's likely a Dockerfile
+					}
 				}
 			}
-			return false;
-		} catch (IOException e) {
-			throw e;
+			return false; // No "FROM" found
 		}
 	}
 

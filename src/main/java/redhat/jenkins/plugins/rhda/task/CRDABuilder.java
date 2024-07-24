@@ -16,6 +16,8 @@
 
 package redhat.jenkins.plugins.rhda.task;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.redhat.exhort.Api;
 import com.redhat.exhort.api.AnalysisReport;
 import com.redhat.exhort.api.ProviderReport;
@@ -243,6 +245,9 @@ public class CRDABuilder extends Builder implements SimpleBuildStep, Serializabl
                 CompletableFuture<byte[]> htmlAnalysisResults = exhortApi.imageAnalysisHtml(imageRefs);
                 try {
                     Map<ImageRef, AnalysisReport> analysisMap = jsonAnalysisResults.get();
+                    ObjectWriter objectWriter = new ObjectMapper().writer();
+                    ObjectMapper objectMapper = new ObjectMapper();
+
                     for (Map.Entry<ImageRef, AnalysisReport> entry : analysisMap.entrySet()) {
                         ImageRef imageRef = entry.getKey();
                         AnalysisReport report = entry.getValue();
